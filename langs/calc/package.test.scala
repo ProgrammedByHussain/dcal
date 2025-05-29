@@ -85,9 +85,39 @@ class CalcTests extends munit.FunSuite:
         lang.Expression(
           lang.Number("5"),
         ),
-        CalcReader.AddOp(),
+        CalcReader.AddOp("+"),
         lang.Expression(
           lang.Number("11"),
+        ),
+      ),
+    )
+
+  test("read grouped"):
+    assertEquals(
+      "(2 + 3) * 4".read,
+      Node.Top(
+        CalcReader.Group(
+          lang.Expression(lang.Number("2")),
+          CalcReader.AddOp("+"),
+          lang.Expression(lang.Number("3")),
+        ),
+        CalcReader.MulOp("*"),
+        lang.Expression(lang.Number("4")),
+      ),
+    )
+
+  test("read grouped grouped"):
+    assertEquals(
+      "((2 + 3) * 4)".read,
+      Node.Top(
+        CalcReader.Group(
+          CalcReader.Group(
+            lang.Expression(lang.Number("2")),
+            CalcReader.AddOp("+"),
+            lang.Expression(lang.Number("3")),
+          ),
+          CalcReader.MulOp("*"),
+          lang.Expression(lang.Number("4")),
         ),
       ),
     )
@@ -99,7 +129,7 @@ class CalcTests extends munit.FunSuite:
         lang.Expression(
           lang.Number("5"),
         ),
-        CalcReader.MulOp(),
+        CalcReader.MulOp("*"),
         lang.Expression(
           lang.Number("11"),
         ),
@@ -113,11 +143,11 @@ class CalcTests extends munit.FunSuite:
         lang.Expression(
           lang.Number("5"),
         ),
-        CalcReader.AddOp(),
+        CalcReader.AddOp("+"),
         lang.Expression(
           lang.Number("11"),
         ),
-        CalcReader.MulOp(),
+        CalcReader.MulOp("*"),
         lang.Expression(
           lang.Number("4"),
         ),
@@ -195,6 +225,24 @@ class CalcTests extends munit.FunSuite:
               .at("5 + 11 * 4"),
           )
           .at("5 + 11 * 4"),
+      ),
+    )
+
+  test("grouped parse"):
+    assertEquals(
+      "((2 + 3) * 4)".parse,
+      Node.Top(
+        lang.Expression(
+          lang.Mul(
+            lang.Expression(
+              lang.Add(
+                lang.Expression(lang.Number("2")),
+                lang.Expression(lang.Number("3")),
+              ),
+            ),
+            lang.Expression(lang.Number("4")),
+          ),
+        ),
       ),
     )
 

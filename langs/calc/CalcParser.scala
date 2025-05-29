@@ -28,15 +28,28 @@ object CalcParser extends PassSeq:
   import CalcReader.*
 
   lazy val passes = List(
+    GroupIsExpression,
     MulDivPass,
     AddSubPass,
+    StripGroups,
   )
 
   def inputWellformed: Wellformed = CalcReader.wellformed
 
+  object GroupIsExpression extends Pass:
+    val wellformed = prevWellformed.makeDerived:
+      Node.Top.removeCases(Group)
+      Expression.addCases(Group)
+    val rules = pass(strategy = pass.bottomUp, once = true)
+      .rules:
+        on(tok(Group)).rewrite: group =>
+          splice(Expression(group.unparent()))
+  end GroupIsExpression
+
   object MulDivPass extends Pass:
     val wellformed = prevWellformed.makeDerived:
       Node.Top.removeCases(MulOp, DivOp)
+      Group.removeCases(MulOp, DivOp)
       Expression.addCases(Mul, Div)
       Mul ::= fields(
         Expression,
@@ -125,4 +138,17 @@ object CalcParser extends PassSeq:
           )
     end rules
   end AddSubPass
+
+  object StripGroups extends Pass:
+    val wellformed = prevWellformed.makeDerived:
+      Expression.removeCases(Group)
+    val rules = pass(strategy = pass.bottomUp, once = true)
+      .rules:
+        on(
+          tok(Expression) *> onlyChild:
+            tok(Group) *> onlyChild:
+              tok(Expression),
+        ).rewrite: expr =>
+          splice(expr.unparent())
+  end StripGroups
 end CalcParser
