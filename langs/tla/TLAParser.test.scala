@@ -31,8 +31,8 @@ class TLAParserTests extends munit.FunSuite, test.WithTLACorpus:
 
     assume(!top.hasErrors, top)
 
-    instrumentWithTracer(DebugAdapter("localhost", 4711)):
-      TLAParser(top)
+    // instrumentWithTracer(DebugAdapter("localhost", 4711)):
+    //   TLAParser(top)
     
 
     // re-enable if interesting:
