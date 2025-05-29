@@ -15,11 +15,13 @@
 package forja.langs.calc
 
 import forja.*
+import forja.dsl.*
+import forja.manip.RewriteDebugTracer
 import forja.source.{Source, SourceRange}
 
 import Builtin.{Error, SourceMarker}
 
-class CalcReaderTests extends munit.FunSuite:
+class CalcTests extends munit.FunSuite:
   extension (str: String)
     def read: Node.Top =
       forja.langs.calc.read
@@ -45,8 +47,8 @@ class CalcReaderTests extends munit.FunSuite:
       val top = parse
 
       // format: off
-      // instrumentWithTracer(Manip.RewriteDebugTracer(os.pwd / "dbg_calc_evaluator_passes")):
-      CalcEvaluator(top)
+      instrumentWithTracer(RewriteDebugTracer(os.pwd / "dbg_calc_evaluator_passes")):
+        CalcEvaluator(top)
       // format: on
 
       // os.write.over(
@@ -265,7 +267,7 @@ class CalcReaderTests extends munit.FunSuite:
     assertEquals(
       "5 + 11".evaluate,
       Node.Top(
-        lang.Number("16"),
+        Node.Embed(16),
       ),
     )
 
@@ -273,7 +275,7 @@ class CalcReaderTests extends munit.FunSuite:
     assertEquals(
       "5 * 11".evaluate,
       Node.Top(
-        lang.Number("55"),
+        Node.Embed(55),
       ),
     )
 
@@ -281,7 +283,7 @@ class CalcReaderTests extends munit.FunSuite:
     assertEquals(
       "5 + 11 * 4".evaluate,
       Node.Top(
-        lang.Number("49"),
+        Node.Embed(49),
       ),
     )
 
@@ -289,7 +291,7 @@ class CalcReaderTests extends munit.FunSuite:
     assertEquals(
       "5 * 4 + 4 / 2".evaluate,
       Node.Top(
-        lang.Number("22"),
+        Node.Embed(22),
       ),
     )
 
@@ -297,7 +299,7 @@ class CalcReaderTests extends munit.FunSuite:
     assertEquals(
       "5 * 4 + 4 / 2 - 6".evaluate,
       Node.Top(
-        lang.Number("16"),
+        Node.Embed(16),
       ),
     )
 
@@ -305,6 +307,6 @@ class CalcReaderTests extends munit.FunSuite:
     assertEquals(
       "5 * 4 + 4 / 2 - 6 * 2".evaluate,
       Node.Top(
-        lang.Number("10"),
+        Node.Embed(10),
       ),
     )

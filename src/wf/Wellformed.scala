@@ -541,7 +541,7 @@ object Wellformed:
           /* maybe it helps to assert something here, but it is technically
            * correct to just do nothing */
 
-      def addCases(cases: Token*): Unit =
+      def addCases(cases: (Token | EmbedMeta[?])*): Unit =
         existingShape match
           case Shape.Choice(choices) =>
             token ::=! Shape.Choice(choices ++ cases)

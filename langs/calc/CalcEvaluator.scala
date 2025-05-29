@@ -30,103 +30,72 @@ object CalcEvaluator extends PassSeq:
   def inputWellformed: Wellformed = lang.wf
 
   val passes = List(
-    SimplifyPass,
-    RemoveLayerPass,
+    ConstantsPass,
+    EvaluatorPass,
+    StripExpressionPass,
   )
 
-  object SimplifyPass extends PassSeq.Pass:
+  object ConstantsPass extends Pass:
     val wellformed = prevWellformed.makeDerived:
-      Node.Top ::=! Expression
+      Expression.removeCases(Number)
+      Expression.addCases(EmbedMeta[Int])
+    val rules = pass(once = true, strategy = pass.bottomUp)
+      .rules:
+        on(
+          tok(Expression) *> onlyChild(tok(Number)),
+        ).rewrite: num =>
+          splice(Expression(Node.Embed(num.sourceRange.decodeString().toInt)))
+
+  object EvaluatorPass extends Pass:
+    val wellformed = prevWellformed.makeDerived:
+      Expression ::=! embedded[Int]
     val rules = pass(once = false, strategy = pass.bottomUp)
       .rules:
         on(
-          field(tok(Expression)) *> onlyChild(
+          tok(Expression) *> onlyChild(
             tok(Add).withChildren:
-              field(tok(Expression) *> onlyChild(tok(Number)))
-                ~ field(tok(Expression) *> onlyChild(tok(Number)))
+              field(tok(Expression) *> onlyChild(embed[Int]))
+                ~ field(tok(Expression) *> onlyChild(embed[Int]))
                 ~ eof,
           ),
         ).rewrite: (left, right) =>
-          val leftNum = left.unparent().sourceRange.decodeString().toInt
-          val rightNum = right.unparent().sourceRange.decodeString().toInt
-
-          splice(
-            Expression(
-              Number(
-                (leftNum + rightNum).toString(),
-              ),
-            ),
-          )
+          splice(Expression(Node.Embed[Int](left + right)))
         | on(
-          field(tok(Expression)) *> onlyChild(
+          tok(Expression) *> onlyChild(
             tok(Sub).withChildren:
-              field(tok(Expression) *> onlyChild(tok(Number)))
-                ~ field(tok(Expression) *> onlyChild(tok(Number)))
+              field(tok(Expression) *> onlyChild(embed[Int]))
+                ~ field(tok(Expression) *> onlyChild(embed[Int]))
                 ~ eof,
           ),
         ).rewrite: (left, right) =>
-          val leftNum = left.unparent().sourceRange.decodeString().toInt
-          val rightNum = right.unparent().sourceRange.decodeString().toInt
-
-          splice(
-            Expression(
-              Number(
-                (leftNum - rightNum).toString(),
-              ),
-            ),
-          )
+          splice(Expression(Node.Embed[Int](left - right)))
         | on(
-          field(tok(Expression)) *> onlyChild(
+          tok(Expression) *> onlyChild(
             tok(Mul).withChildren:
-              field(tok(Expression) *> onlyChild(tok(Number)))
-                ~ field(tok(Expression) *> onlyChild(tok(Number)))
+              field(tok(Expression) *> onlyChild(embed[Int]))
+                ~ field(tok(Expression) *> onlyChild(embed[Int]))
                 ~ eof,
           ),
         ).rewrite: (left, right) =>
-          val leftNum = left.unparent().sourceRange.decodeString().toInt
-          val rightNum = right.unparent().sourceRange.decodeString().toInt
-
-          splice(
-            Expression(
-              Number(
-                (leftNum * rightNum).toString(),
-              ),
-            ),
-          )
+          splice(Expression(Node.Embed[Int](left * right)))
         | on(
-          field(tok(Expression)) *> onlyChild(
+          tok(Expression) *> onlyChild(
             tok(Div).withChildren:
-              field(tok(Expression) *> onlyChild(tok(Number)))
-                ~ field(tok(Expression) *> onlyChild(tok(Number)))
+              field(tok(Expression) *> onlyChild(embed[Int]))
+                ~ field(tok(Expression) *> onlyChild(embed[Int]))
                 ~ eof,
           ),
         ).rewrite: (left, right) =>
-          val leftNum = left.unparent().sourceRange.decodeString().toInt
-          val rightNum = right.unparent().sourceRange.decodeString().toInt
-
-          splice(
-            Expression(
-              Number(
-                (leftNum / rightNum).toString(),
-              ),
-            ),
-          )
+          splice(Expression(Node.Embed[Int](left / right)))
     end rules
-  end SimplifyPass
+  end EvaluatorPass
 
-  object RemoveLayerPass extends Pass:
+  object StripExpressionPass extends Pass:
     val wellformed = prevWellformed.makeDerived:
-      Node.Top ::=! Number
-    val rules = pass(once = true, strategy = pass.topDown)
+      Node.Top ::=! embedded[Int]
+    val rules = pass(once = true, strategy = pass.bottomUp)
       .rules:
-        on(
-          tok(Expression).withChildren:
-            field(tok(Number))
-              ~ eof,
-        ).rewrite: (number) =>
-          splice(
-            number.unparent(),
-          )
-    end rules
-  end RemoveLayerPass
+        on(tok(Expression) *> onlyChild(embed[Int])).rewrite: i =>
+          splice(Node.Embed(i))
+  end StripExpressionPass
 end CalcEvaluator
