@@ -16,8 +16,8 @@ package forja.langs.tla
 
 import forja.*
 import forja.source.{Source, SourceRange}
-import forja.dsl.*
-import forja.manip.DebugAdapter
+// import forja.dsl.*
+// import forja.manip.DebugAdapter
 
 class TLAParserTests extends munit.FunSuite, test.WithTLACorpus:
   self =>
@@ -33,7 +33,6 @@ class TLAParserTests extends munit.FunSuite, test.WithTLACorpus:
 
     // instrumentWithTracer(DebugAdapter("localhost", 4711)):
     //   TLAParser(top)
-    
 
     // re-enable if interesting:
     // val folder = os.SubPath(file.subRelativeTo(clonesDir).segments.init)
